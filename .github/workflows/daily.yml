@@ -1,24 +1,32 @@
-- name: Checkout repo
-  uses: actions/checkout@v3
-  with:
-    ref: main
-    persist-credentials: false  # Disable default token
+name: Daily Commit Board
 
-- name: Set up Git config
-  run: |
-    git config --global user.name "${{ github.actor }}"
-    git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
-- name: Authenticate with PAT
-  env:
-    PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-  run: |
-    git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          persist-credentials: true
 
-- name: Make a daily commit
-  run: |
-    date=$(date)
-    echo "Last updated on $date" > last-updated.txt
-    git add last-updated.txt
-    git commit -m "Daily update on $date" || echo "No changes to commit"
-    git push
+      - name: Set up branch tracking
+        run: git branch --set-upstream-to=origin/main main || true
+
+      - name: Set up Git config
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Make a daily commit
+        run: |
+          date=$(date)
+          echo "Last updated on $date" > last-updated.txt
+          git add last-updated.txt
+          git commit -m "Daily update on $date" || echo "No changes to commit"
+          git push
