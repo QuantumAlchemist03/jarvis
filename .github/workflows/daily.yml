@@ -2,8 +2,8 @@ name: Daily Commit Board
 
 on:
   schedule:
-    - cron: '0 0 * * *'
-  workflow_dispatch:
+    - cron: '0 0 * * *'  # Runs daily at 00:00 UTC
+  workflow_dispatch:      # Allows manual trigger
 
 jobs:
   update:
@@ -20,6 +20,8 @@ jobs:
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
       - name: Check PAT token presence
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           if [ -z "$PAT_TOKEN" ]; then
             echo "PAT_TOKEN is empty!"
@@ -27,8 +29,6 @@ jobs:
           else
             echo "PAT_TOKEN is set"
           fi
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Make a daily commit and push with PAT
         env:
@@ -38,6 +38,7 @@ jobs:
           echo "Last updated on $date" > last-updated.txt
           git add last-updated.txt
           git commit -m "Daily update on $date" || echo "No changes to commit"
-          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git
+          git remote remove origin
+          git remote add origin "https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git"
           git remote -v
           git push origin main
