@@ -22,5 +22,5 @@ jobs:
           date=$(date)
           echo "Last updated on $date" > last-updated.txt
           git add last-updated.txt
-          git commit -m "Daily update on $date"
+          git commit -m "Daily update on $date" || echo "No changes to commit"
           git push
