@@ -3,11 +3,12 @@ name: Daily Commit Board
 on:
   schedule:
     - cron: '0 0 * * *'  # Runs daily at 00:00 UTC
-  workflow_dispatch:      # Allows manual trigger
+  workflow_dispatch:      # Manual trigger via GitHub UI
 
 jobs:
   update:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -24,10 +25,10 @@ jobs:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           if [ -z "$PAT_TOKEN" ]; then
-            echo "PAT_TOKEN is empty!"
+            echo "❌ PAT_TOKEN is missing or empty!"
             exit 1
           else
-            echo "PAT_TOKEN is set"
+            echo "✅ PAT_TOKEN is set."
           fi
 
       - name: Make a daily commit and push with PAT
@@ -37,7 +38,9 @@ jobs:
           date=$(date)
           echo "Last updated on $date" > last-updated.txt
           git add last-updated.txt
-          git commit -m "Daily update on $date" || echo "No changes to commit"
+          git commit -m "Daily update on $date" || echo "ℹ️ No changes to commit"
+          
+          # Forcefully update remote with token
           git remote remove origin
           git remote add origin "https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git"
           git remote -v
