@@ -1,0 +1,26 @@
+name: Daily Commit Board
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs every day at 00:00 UTC
+  workflow_dispatch:      # Allows you to run manually too
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Git config
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Make a daily commit
+        run: |
+          date=$(date)
+          echo "Last updated on $date" > last-updated.txt
+          git add last-updated.txt
+          git commit -m "Daily update on $date"
+          git push
