@@ -1,9 +1,12 @@
-name: Daily Commit Board
+name: Daily Commit & Visual Update
 
 on:
   schedule:
     - cron: '0 0 * * *'  # Daily at midnight UTC
-  workflow_dispatch:      # Allow manual runs
+  workflow_dispatch:
+  push:  # Run also on manual pushes
+    branches:
+      - main
 
 jobs:
   update:
@@ -12,37 +15,43 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        with:
-          ref: main
-          persist-credentials: false  # ✨ Important: disables GITHUB_TOKEN override
 
       - name: Set up Git config
         run: |
-          git config --global user.name "${{ github.actor }}"
-          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "QuantumAlchemist03"
+          git config --global user.email "QuantumAlchemist03@users.noreply.github.com"
 
-      - name: Check PAT token presence
+      - name: Generate or update log and dashboard files
         env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          if [ -z "$PAT_TOKEN" ]; then
-            echo "❌ PAT_TOKEN is missing!"
-            exit 1
-          else
-            echo "✅ PAT_TOKEN is set."
-          fi
-
-      - name: Make a daily commit and push with PAT
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          DATE: ${{ steps.date.outputs.date }}
         run: |
           date=$(date)
-          echo "Last updated on $date" > last-updated.txt
-          git add last-updated.txt
-          git commit -m "Daily update on $date" || echo "ℹ️ No changes to commit"
+          echo "Last updated on $date — run $RANDOM" > last-updated.txt
 
-          # Re-add origin with PAT
-          git remote remove origin
-          git remote add origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git
-          git remote -v
+          echo "## 📝 TODO List\n\n- [ ] Task 1\n- [ ] Task 2\n\n_Last auto-generated on $date_" > TODO.md
+
+          echo "## 📦 Changelog\n\n- $date: Daily automation run\n\n" >> CHANGELOG.md
+
+          echo "Log entry at $date" >> log.txt
+
+      - name: Commit changes
+        run: |
+          git add .
+          git commit -m "🤖 Daily update: $date" || echo "No changes to commit"
+
+      - name: Push changes
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git
+          git push origin main
+
+      - name: Badge metadata
+        run: |
+          echo "![Last Updated](https://img.shields.io/date/$(date +%s)?label=Last%20Updated&color=green)" > README_BADGE.md
+
+      - name: Commit badge
+        run: |
+          git add README_BADGE.md
+          git commit -m "🛡️ Updated badge" || echo "No badge changes"
           git push origin main
