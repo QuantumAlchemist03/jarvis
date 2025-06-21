@@ -2,8 +2,8 @@ name: Daily Commit Board
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs every day at 00:00 UTC
-  workflow_dispatch:      # Allows you to run manually too
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   update:
@@ -11,6 +11,12 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Set up branch tracking
+        run: git branch --set-upstream-to=origin/main main || true
 
       - name: Set up Git config
         run: |
