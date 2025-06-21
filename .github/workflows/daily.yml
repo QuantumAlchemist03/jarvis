@@ -19,6 +19,17 @@ jobs:
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
+      - name: Check PAT token presence
+        run: |
+          if [ -z "$PAT_TOKEN" ]; then
+            echo "PAT_TOKEN is empty!"
+            exit 1
+          else
+            echo "PAT_TOKEN is set"
+          fi
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+
       - name: Make a daily commit and push with PAT
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
